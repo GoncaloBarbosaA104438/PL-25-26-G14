@@ -3,7 +3,9 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
+import src.ast_nodes as ast_nodes
 from src.lexer import lexer
+from src.parser import parse
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -34,12 +36,42 @@ def run_lexer(source: str) -> None:
         print(token)
 
 
-def run_parser(_source: str) -> None:
-    raise SystemExit("Parser mode is not available yet.")
+def run_parser(source: str) -> None:
+    parse(source)
+    print("Syntax OK")
 
 
-def run_ast(_source: str) -> None:
-    raise SystemExit("AST output mode is not available yet.")
+def format_ast(value, indent: int = 0) -> str:
+    prefix = " " * indent
+
+    if isinstance(value, list):
+        if not value:
+            return "[]"
+
+        lines = ["["]
+        for item in value:
+            lines.append(f"{' ' * (indent + 2)}{format_ast(item, indent + 2)},")
+        lines.append(f"{prefix}]")
+        return "\n".join(lines)
+
+    if value.__class__.__module__ == ast_nodes.__name__:
+        attrs = vars(value)
+        if not attrs:
+            return f"{value.__class__.__name__}()"
+
+        lines = [f"{value.__class__.__name__}("]
+        for name, attr_value in attrs.items():
+            rendered = format_ast(attr_value, indent + 2)
+            lines.append(f"{' ' * (indent + 2)}{name}={rendered},")
+        lines.append(f"{prefix})")
+        return "\n".join(lines)
+
+    return repr(value)
+
+
+def run_ast(source: str) -> None:
+    tree = parse(source)
+    print(format_ast(tree))
 
 
 def build_arg_parser() -> ArgumentParser:
