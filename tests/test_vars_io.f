@@ -1,0 +1,9 @@
+PROGRAM TESTVARS
+INTEGER IDADE
+REAL SALARIO
+PRINT *, 'Introduza idade e salario:'
+READ *, IDADE
+READ *, SALARIO
+SALARIO = SALARIO + 100.50
+PRINT *, 'Nova idade e salario:', IDADE, SALARIO
+END
