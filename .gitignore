@@ -2,4 +2,5 @@
 AGENTS.md
 .venv/*
 .venv
+*.txt
 

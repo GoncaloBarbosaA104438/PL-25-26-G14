@@ -8,7 +8,7 @@ from src.ast_nodes import (
     Assign,
     BinOp,
     Continue,
-    DoLoop,
+    DoHeader,
     Goto,
     IfThenElse,
     LogicalConst,
@@ -20,6 +20,8 @@ from src.ast_nodes import (
     UnaryOp,
     Var,
     VarDecl,
+    ArrayDecl,
+    ArrayRef
 )
 from src.lexer import lexer, tokens
 
@@ -39,17 +41,6 @@ def set_label(statement, label_id):
     statement.label_id = label_id
     return statement
 
-
-def expr_to_text(expr):
-    if isinstance(expr, Var):
-        return expr.name
-    if isinstance(expr, Num):
-        return str(expr.value)
-    if isinstance(expr, String):
-        return repr(expr.value)
-    if isinstance(expr, LogicalConst):
-        return ".TRUE." if expr.value else ".FALSE."
-    return repr(expr)
 
 
 def p_program(p):
@@ -96,7 +87,7 @@ def p_declarator_id(p):
 
 def p_declarator_array(p):
     "declarator : ID LPAREN expression RPAREN"
-    p[0] = f"{p[1]}({expr_to_text(p[3])})"
+    p[0] = ArrayDecl(p[1], p[3])
 
 
 def p_statement_list_many(p):
@@ -114,30 +105,10 @@ def p_statement(p):
     p[0] = set_label(p[2], p[1])
 
 
-def p_do_statement_list_many(p):
-    "do_statement_list : do_statement_list do_statement"
-    p[0] = p[1] + [p[2]]
-
-
-def p_do_statement_list_empty(p):
-    "do_statement_list :"
-    p[0] = []
-
-
-def p_do_statement(p):
-    "do_statement : optional_label do_statement_body"
-    p[0] = set_label(p[2], p[1])
-
-
 def p_optional_label(p):
     """optional_label : INTEGER_LITERAL
                       | empty"""
     p[0] = p[1]
-
-
-def p_empty(p):
-    "empty :"
-    p[0] = None
 
 
 def p_statement_body(p):
@@ -145,19 +116,9 @@ def p_statement_body(p):
                       | print_statement
                       | read_statement
                       | if_statement
-                      | do_loop_statement
+                      | do_header_statement
                       | goto_statement
                       | continue_statement"""
-    p[0] = p[1]
-
-
-def p_do_statement_body(p):
-    """do_statement_body : assign_statement
-                         | print_statement
-                         | read_statement
-                         | if_statement
-                         | do_loop_statement
-                         | goto_statement"""
     p[0] = p[1]
 
 
@@ -167,13 +128,23 @@ def p_assign_statement(p):
 
 
 def p_print_statement(p):
-    "print_statement : PRINT TIMES COMMA expression_list"
+    "print_statement : PRINT opt_fmt COMMA expression_list"
     p[0] = Print(p[4])
 
 
 def p_read_statement(p):
-    "read_statement : READ TIMES COMMA target_list"
+    "read_statement : READ opt_fmt COMMA target_list"
     p[0] = Read(p[4])
+
+
+def p_opt_fmt_times(p):
+    "opt_fmt : TIMES"
+    p[0] = p[1]
+
+
+def p_opt_fmt_empty(p):
+    "opt_fmt : empty"
+    p[0] = None
 
 
 def p_if_statement(p):
@@ -187,9 +158,9 @@ def p_else_part(p):
     p[0] = p[2] if len(p) == 3 else []
 
 
-def p_do_loop_statement(p):
-    "do_loop_statement : DO INTEGER_LITERAL ID ASSIGN expression COMMA expression do_statement_list INTEGER_LITERAL CONTINUE"
-    p[0] = DoLoop(p[2], p[3], p[5], p[7], p[8] + [Continue(label_id=p[9])])
+def p_do_header_statement(p):
+    "do_header_statement : DO INTEGER_LITERAL ID ASSIGN expression COMMA expression"
+    p[0] = DoHeader(p[2], p[3], p[5], p[7])
 
 
 def p_goto_statement(p):
@@ -282,8 +253,12 @@ def p_variable_ref_id(p):
 
 def p_variable_ref_args(p):
     "variable_ref : ID LPAREN expression_list RPAREN"
-    args = ", ".join(expr_to_text(arg) for arg in p[3])
-    p[0] = Var(f"{p[1]}({args})")
+    p[0] = ArrayRef(p[1], p[3])
+
+
+def p_empty(p):
+    "empty :"
+    p[0] = None
 
 
 def p_error(p):

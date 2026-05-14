@@ -1,3 +1,5 @@
+# pyright: ignore[reportShadowedImports]
+
 """AST node definitions for the Fortran 77 compiler."""
 
 from dataclasses import dataclass
@@ -45,12 +47,11 @@ class IfThenElse:
 
 
 @dataclass
-class DoLoop:
+class DoHeader:
     label: int
     var: str
     start: Any
     end: Any
-    block: list[Any]
     label_id: Optional[int] = None
 
 
@@ -96,3 +97,19 @@ class String:
 @dataclass
 class LogicalConst:
     value: bool
+
+@dataclass
+class ArrayDecl:
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size # Deve ser a expressão do tamanho, ex: Num(5)
+    def __repr__(self):
+        return f"ArrayDecl(name={self.name!r}, size={self.size!r})"
+
+@dataclass
+class ArrayRef:
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args # Lista de expressões (os índices)
+    def __repr__(self):
+        return f"ArrayRef(name={self.name!r}, args={self.args!r})"

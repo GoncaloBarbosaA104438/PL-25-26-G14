@@ -3,9 +3,10 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-import src.ast_nodes as ast_nodes
+import src.ast_nodes as ast_module
 from src.lexer import lexer
 from src.parser import parse
+from src.semantic import SemanticAnalyzer
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -54,7 +55,7 @@ def format_ast(value, indent: int = 0) -> str:
         lines.append(f"{prefix}]")
         return "\n".join(lines)
 
-    if value.__class__.__module__ == ast_nodes.__name__:
+    if value.__class__.__module__ == ast_module.__name__:
         attrs = vars(value)
         if not attrs:
             return f"{value.__class__.__name__}()"
@@ -74,6 +75,12 @@ def run_ast(source: str) -> None:
     print(format_ast(tree))
 
 
+def run_semantic(source: str) -> None:
+    tree = parse(source)
+    SemanticAnalyzer(tree).analyze()
+    print("Semantic OK")
+
+
 def build_arg_parser() -> ArgumentParser:
     parser = ArgumentParser(description="Test compiler stages.")
     parser.add_argument("filename", help="Fortran source file to test.")
@@ -82,6 +89,7 @@ def build_arg_parser() -> ArgumentParser:
     modes.add_argument("-lexer", action="store_true", help="Print lexer tokens.")
     modes.add_argument("-parser", action="store_true", help="Run parser checks.")
     modes.add_argument("-ast", action="store_true", help="Print the generated AST.")
+    modes.add_argument("-semantic", action="store_true", help="Run semantic checks.")
 
     return parser
 
@@ -96,6 +104,8 @@ def main() -> None:
         run_parser(source)
     elif args.ast:
         run_ast(source)
+    elif args.semantic:
+        run_semantic(source)
 
 
 if __name__ == "__main__":

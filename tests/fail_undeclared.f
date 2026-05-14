@@ -1,0 +1,6 @@
+PROGRAM ERRUNDEC
+INTEGER X
+X = 5
+Y = X + 10
+PRINT *, 'O valor e:', Y
+END
