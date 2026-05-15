@@ -45,9 +45,23 @@ class SemanticAnalyzer:
     def __init__(self, ast: Program):
         self.ast = ast
         self.symbols: dict[str, Symbol] = {}
+        self.defined_labels: set[int] = set()
 
     def analyze(self) -> None:
+        self.collect_labels(self.ast.statements)
         self.visit(self.ast)
+        
+    def collect_labels(self, statements: list[Any]) -> None:
+        for stmt in statements:
+            if getattr(stmt, 'label_id', None) is not None:
+                if stmt.label_id in self.defined_labels:
+                    raise SemanticError(f"Duplicate label {stmt.label_id} detected")
+                self.defined_labels.add(stmt.label_id)
+            
+            # dentro dos ifs
+            if isinstance(stmt, IfThenElse):
+                self.collect_labels(stmt.if_block)
+                self.collect_labels(stmt.else_block)
 
     def visit(self, node):
         method_name = f"visit_{node.__class__.__name__}"
@@ -127,7 +141,8 @@ class SemanticAnalyzer:
             raise SemanticError(f"DO loop with label {node.label} requires INTEGER bounds")
 
     def visit_Goto(self, node: Goto) -> None:
-        return None
+        if node.target_label not in self.defined_labels:
+            raise SemanticError(f"GOTO target label {node.target_label} does not exist")
 
     def visit_Continue(self, node: Continue) -> None:
         return None

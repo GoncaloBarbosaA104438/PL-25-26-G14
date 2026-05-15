@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import src.ast_nodes as ast_module
+from src.codegen import CodeGenerator
 from src.lexer import lexer
 from src.parser import parse
 from src.semantic import SemanticAnalyzer
@@ -81,6 +82,13 @@ def run_semantic(source: str) -> None:
     print("Semantic OK")
 
 
+def run_codegen(source: str) -> None:
+    tree = parse(source)
+    SemanticAnalyzer(tree).analyze()
+    instructions = CodeGenerator().generate(tree)
+    print("\n".join(instructions))
+
+
 def build_arg_parser() -> ArgumentParser:
     parser = ArgumentParser(description="Test compiler stages.")
     parser.add_argument("filename", help="Fortran source file to test.")
@@ -90,6 +98,7 @@ def build_arg_parser() -> ArgumentParser:
     modes.add_argument("-parser", action="store_true", help="Run parser checks.")
     modes.add_argument("-ast", action="store_true", help="Print the generated AST.")
     modes.add_argument("-semantic", action="store_true", help="Run semantic checks.")
+    modes.add_argument("-codegen", action="store_true", help="Print EWVM assembly.")
 
     return parser
 
@@ -106,6 +115,8 @@ def main() -> None:
         run_ast(source)
     elif args.semantic:
         run_semantic(source)
+    elif args.codegen:
+        run_codegen(source)
 
 
 if __name__ == "__main__":

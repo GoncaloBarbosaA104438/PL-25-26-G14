@@ -3,4 +3,7 @@ AGENTS.md
 .venv/*
 .venv
 *.txt
-
+docs/*.md
+/ref_pascal
+__*__
+*.vm
