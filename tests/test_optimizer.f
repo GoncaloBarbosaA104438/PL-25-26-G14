@@ -1,0 +1,7 @@
+PROGRAM TESTOPT
+INTEGER LIXO(100)
+INTEGER I
+PRINT *, 'Teste Optimizer'
+I = 10 + 5
+PRINT *, 'I = ', I
+END

@@ -5,13 +5,16 @@ import sys
 from pathlib import Path
 
 from src.codegen import CodeGenerator
+from src.optimizer import AstOptimizer
 from src.parser import parse
 from src.semantic import SemanticAnalyzer, SemanticError
 
 
-def compile_source(source: str) -> list[str]:
+def compile_source(source: str, optimize: bool = False) -> list[str]:
     ast = parse(source)
     SemanticAnalyzer(ast).analyze()
+    if optimize:
+        ast = AstOptimizer().optimize(ast)
     return CodeGenerator().generate(ast)
 
 
@@ -27,6 +30,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--output",
         help="Path to the generated EWVM assembly file.",
     )
+    parser.add_argument(
+        "-O",
+        "--optimize",
+        action="store_true",
+        help="Run AST optimization before code generation.",
+    )
     return parser
 
 
@@ -37,7 +46,7 @@ def main() -> None:
 
     try:
         source = input_path.read_text(encoding="utf-8")
-        instructions = compile_source(source)
+        instructions = compile_source(source, args.optimize)
         output_path.write_text("\n".join(instructions) + "\n", encoding="utf-8")
     except (SyntaxError, SemanticError) as error:
         print(f"ERRO: {error}", file=sys.stderr)

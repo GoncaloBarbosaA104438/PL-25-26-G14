@@ -101,13 +101,20 @@ class CodeGenerator:
             self.emit(f"L{label_id}:")
 
     def visit_Assign(self, node: Assign) -> None:
+        is_conversion_needed = (self.target_type(node.target) == "REAL" and 
+                                self.expr_type(node.value) == "INTEGER")
+
         if isinstance(node.target, ArrayRef):
             self.emit_array_location(node.target)
             self.visit(node.value)
+            if is_conversion_needed:
+                self.emit("itof")
             self.emit("storen")
             return
 
         self.visit(node.value)
+        if is_conversion_needed:
+            self.emit("itof")
         self.emit(f"storeg {self.address_map[node.target.name]}")
 
     def visit_Print(self, node: Print) -> None:
@@ -187,8 +194,19 @@ class CodeGenerator:
         self.emit(f"{context['end_label']}:")
 
     def visit_BinOp(self, node: BinOp) -> None:
+        left_type = self.expr_type(node.left)
+        right_type = self.expr_type(node.right)
+        is_real_op = self.expr_type(node) == "REAL"
+
+        # converte se for preciso
         self.visit(node.left)
+        if is_real_op and left_type == "INTEGER":
+            self.emit("itof")
+
         self.visit(node.right)
+        if is_real_op and right_type == "INTEGER":
+            self.emit("itof")
+
         self.emit(self.binary_instruction(node))
 
         if node.op == ".NE.":
@@ -199,8 +217,12 @@ class CodeGenerator:
         if node.op == ".NOT.":
             self.emit("not")
         elif node.op == "-":
-            self.emit("pushi -1")
-            self.emit("mul")
+            if self.expr_type(node.expr) == "REAL":
+                self.emit("pushf -1.0")
+                self.emit("fmul")
+            else:
+                self.emit("pushi -1")
+                self.emit("mul")
 
     def visit_Num(self, node: Num) -> None:
         if isinstance(node.value, float):
@@ -216,6 +238,26 @@ class CodeGenerator:
             self.visit(node.args[0])
             self.visit(node.args[1])
             self.emit("mod")
+            return
+
+        if node.name == "SIN":
+            self.visit(node.args[0])
+            self.emit("fsin")
+            return
+
+        if node.name == "COS":
+            self.visit(node.args[0])
+            self.emit("fcos")
+            return
+
+        if node.name == "INT":
+            self.visit(node.args[0])
+            self.emit("ftoi")
+            return
+
+        if node.name == "REAL":
+            self.visit(node.args[0])
+            self.emit("itof")
             return
 
         self.emit_array_location(node)
@@ -240,27 +282,28 @@ class CodeGenerator:
         self.visit(node)
         self.main_code = original
 
+    
     def binary_instruction(self, node: BinOp) -> str:
+        is_real = self.expr_type(node) == "REAL"
+
         if node.op == "+":
-            return "add"
+            return "fadd" if is_real else "add"
         if node.op == "-":
-            return "sub"
+            return "fsub" if is_real else "sub"
         if node.op == "*":
-            return "mul"
+            return "fmul" if is_real else "mul"
         if node.op == "/":
-            return "fdiv" if self.expr_type(node) == "REAL" else "div"
-        if node.op == ".EQ.":
-            return "equal"
-        if node.op == ".NE.":
+            return "fdiv" if is_real else "div"
+        if node.op in {".EQ.", ".NE."}:
             return "equal"
         if node.op == ".LT.":
-            return "inf"
+            return "finf" if is_real else "inf"
         if node.op == ".LE.":
-            return "infeq"
+            return "finfeq" if is_real else "infeq"
         if node.op == ".GT.":
-            return "sup"
+            return "fsup" if is_real else "sup"
         if node.op == ".GE.":
-            return "supeq"
+            return "fsupeq" if is_real else "supeq"
         if node.op == ".AND.":
             return "and"
         if node.op == ".OR.":
@@ -287,6 +330,10 @@ class CodeGenerator:
             if node.name == "MOD":
                 has_real_arg = any(self.expr_type(arg) == "REAL" for arg in node.args)
                 return "REAL" if has_real_arg else "INTEGER"
+            if node.name in {"SIN", "COS", "REAL"}:
+                return "REAL"
+            if node.name == "INT":
+                return "INTEGER"
             return self.type_map[node.name]
         if isinstance(node, UnaryOp):
             return "LOGICAL" if node.op == ".NOT." else self.expr_type(node.expr)

@@ -246,6 +246,11 @@ def p_expression_variable(p):
     p[0] = p[1]
 
 
+def p_expression_real_intrinsic(p):
+    "expression : REAL LPAREN expression_list RPAREN"
+    p[0] = ArrayRef("REAL", p[3])
+
+
 def p_variable_ref_id(p):
     "variable_ref : ID"
     p[0] = Var(p[1])

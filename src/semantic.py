@@ -40,7 +40,7 @@ class SemanticAnalyzer:
     relational_ops = {".EQ.", ".NE.", ".LT.", ".LE.", ".GT.", ".GE."}
     arithmetic_ops = {"+", "-", "*", "/"}
     logical_ops = {".AND.", ".OR."}
-    intrinsic_functions = {"MOD"}
+    intrinsic_functions = {"MOD", "SIN", "COS", "INT", "REAL"}
 
     def __init__(self, ast: Program):
         self.ast = ast
@@ -218,6 +218,34 @@ class SemanticAnalyzer:
             self.require_numeric(left_type, "MOD")
             self.require_numeric(right_type, "MOD")
             return "REAL" if "REAL" in {left_type, right_type} else "INTEGER"
+
+        if node.name in {"SIN", "COS"}:
+            if len(node.args) != 1:
+                raise SemanticError(f"{node.name} expects exactly one argument")
+
+            arg_type = self.visit(node.args[0])
+            self.require_numeric(arg_type, node.name)
+            if arg_type != "REAL":
+                raise SemanticError(f"{node.name} expects a REAL argument")
+            return "REAL"
+
+        if node.name == "INT":
+            if len(node.args) != 1:
+                raise SemanticError("INT expects exactly one argument")
+
+            arg_type = self.visit(node.args[0])
+            if arg_type != "REAL":
+                raise SemanticError("INT expects a REAL argument")
+            return "INTEGER"
+
+        if node.name == "REAL":
+            if len(node.args) != 1:
+                raise SemanticError("REAL expects exactly one argument")
+
+            arg_type = self.visit(node.args[0])
+            if arg_type != "INTEGER":
+                raise SemanticError("REAL expects an INTEGER argument")
+            return "REAL"
 
         raise SemanticError(f"Unsupported intrinsic function {node.name}")
 

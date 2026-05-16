@@ -1,0 +1,8 @@
+PROGRAM TESTTRIG
+REAL ANGULO, VALS, VALC
+ANGULO = 0.0
+VALS = SIN(ANGULO)
+VALC = COS(ANGULO)
+PRINT *, 'Seno de 0.0 (deve ser 0.0): ', VALS
+PRINT *, 'Cosseno de 0.0 (deve ser 1.0): ', VALC
+END

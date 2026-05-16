@@ -1,0 +1,8 @@
+PROGRAM TESTUNARY
+REAL VALR, A, B, C
+INTEGER VALI
+VALR = -5.5 + 10.0 * 2.0
+VALI = -5 + 10 * 2
+PRINT *, 'Real (14.5): ', VALR
+PRINT *, 'Inteiro (15): ', VALI
+END
