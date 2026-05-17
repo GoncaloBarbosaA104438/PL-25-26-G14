@@ -1,5 +1,3 @@
-"""EWVM code generation for the Fortran 77 compiler MVP."""
-
 from typing import Any
 
 from src.ast_nodes import (

@@ -1,5 +1,3 @@
-"""Small command-line test runner for compiler stages."""
-
 from argparse import ArgumentParser
 from pathlib import Path
 

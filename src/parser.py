@@ -1,7 +1,5 @@
 # pyright: ignore[reportShadowedImports]
 
-"""Parser for the Fortran 77 compiler MVP."""
-
 import ply.yacc as yacc
 
 from src.ast_nodes import (

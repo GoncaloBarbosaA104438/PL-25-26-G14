@@ -1,5 +1,3 @@
-"""Command-line entry point for the Fortran 77 compiler."""
-
 import argparse
 import sys
 from pathlib import Path

@@ -1,6 +1,5 @@
 # pyright: ignore[reportShadowedImports]
 
-"""AST node definitions for the Fortran 77 compiler."""
 
 from dataclasses import dataclass
 from typing import Any, Optional, Union

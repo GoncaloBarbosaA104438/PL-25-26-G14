@@ -1,5 +1,3 @@
-"""Semantic analysis for the Fortran 77 compiler MVP."""
-
 from dataclasses import dataclass
 from typing import Any
 

@@ -1,8 +1,3 @@
-"""Lexer for the Fortran 77 compiler MVP.
-
-The project uses free-form input, so spaces and tabs are ignored by the lexer.
-"""
-
 import ply.lex as lex
 
 
